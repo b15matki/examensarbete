@@ -1,0 +1,56 @@
+Query 1
+Select all websites content length in order to calculate the average value of the content length by year.
+MongoDB
+db.mongoarticles.find( { Filetype: 'html', HTTP_Archive_Time: { $gte: ISODate("1997-01-01T00:00:00.000Z"), $lt: ISODate("2018-01-01T00:00:00.000Z") }}, {HTTP_Content_Length: 1} )
+
+or for specific year (example 1997)
+
+db.mongoarticles.find( { Filetype: 'html', HTTP_Archive_Time: { $gte: ISODate("1997-01-01T00:00:00.000Z"), $lt: ISODate("1997-12-31T00:00:00.000Z") }}, {HTTP_Content_Length: 1} )
+CouchDB
+Create view:
+function(dbo) {
+	if(dbo.Filetype == 'html'){
+    	emit(dbo.HTTP_Archive_Time, {HTTP_Header_Length: dbo.HTTP_Content_Length});
+    }
+}
+
+add extra URL to query the view in order to select a specific year
+
+http://localhost:5984/dbo/_design/testqueries/_view/query1?startkey=%222005-02-01T00:00:00Z%22&endkey=%222005-03-01T00:00:00Z%22
+Query 2
+Select all HTML websites from a specific date in order to group them by year in order to calculate the number of HTML websites.  
+
+
+MongoDB
+db.mongoarticles.find( { Filetype: 'html', HTTP_Archive_Time: { $gte: ISODate("1997-01-01T00:00:00.000Z"), $lt: ISODate("1997-12-31T00:00:00.000Z") }}, {_id: 1})
+
+save into year-specific file and repeat this for every year that is needed
+CouchDB
+Create view: 
+
+function(dbo) {
+	if(dbo.Filetype == 'html'){
+    	emit(dbo.HTTP_Archive_Time, {ID: dbo._id});
+    }
+}
+
+Add extra URL to query the view in order to select a specific year
+
+http://localhost:5984/dbo/_design/testqueries/_view/query2?startkey=%222005-01-01T00:00:00Z%22&endkey=%222006-01-01T00:00:00Z%22
+Query 3
+Select all subtypes and group them by each subtype in order to see the frequency of different formats contained within the Swedish Internet.
+MongoDB
+db.mongoarticles.find( {filetype: 'html'} , {HTTP_Url: 1})
+CouchDB
+Create view: 
+
+function(dbo) {
+	if(dbo.Filetype == null){
+	} else {
+        emit(dbo.Filetype, {ID: dbo._id});
+	}
+}
+
+Add extra URL to query the view in order to select a specific year
+
+http://localhost:5984/dbo/_design/testqueries/_view/query3?startkey=%22pdf%22
