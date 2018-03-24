@@ -6,93 +6,92 @@ console.log("Document insertion initiated!");
 
 var nrFile = 0;
 
+/****************** MongoDB initialization ******************/
+var MongoClient = require('mongodb').MongoClient;
+var Mongo_url = "mongodb://localhost:27017/";
+
+/****************** CouchDB initialization ******************/
+var nano = require('nano')('http://localhost:5984');
+var dbcouch = nano.db.use('dbo');
+
 /* Loops through the files */
-fs.readdirSync(targetFolder).forEach(file => {
-  
+var files = fs.readdirSync(targetFolder);
 
-  /* Reading of targetet file */
-  var content = fs.readFileSync(targetFolder + file, 'utf8'); // reads from the file which path is in argument and puts its content into the content variable
-  var msg = mimemessage.parse(content.replace(/\n/g, '\r\n')); // fixes lines ending so that mimemessage works: REALLY IMPORTANT
-  console.log("Reading " + file);
+async function insertFiles(files) {
+  for (let file of files) {
 
-  /****************** MongoDB initialization ******************/
-  var MongoClient = require('mongodb').MongoClient;
-  var Mongo_url = "mongodb://localhost:27017/";
+    /* Reading of targetet file */
+    var content = fs.readFileSync(targetFolder + file, 'utf8'); // reads from the file which path is in argument and puts its content into the content variable
+    var msg = mimemessage.parse(content.replace(/\n/g, '\r\n')); // fixes lines ending so that mimemessage works: REALLY IMPORTANT
+    console.log("Reading " + file);
 
-  /****************** CouchDB initialization ******************/
-  var nano = require('nano')('http://localhost:5984');
-  var dbo = nano.db.use('dbo');
-
-  /****************** Generation of data ******************/
-  /* Extract the correct element containing the subtype & also the other body */
-  var filetype;
-  var filecontent;
-  var http_headers;
-  for (var k in msg.body) {
-    if(msg.body[k].header('HTTP-part') == 'Content') {
-      filetype = msg.body[k].contentType()['subtype']; 
-      filecontent = msg.body[k].body;
-    } else if(msg.body[k].header('HTTP-part') == 'Header') {
-      http_headers = msg.body[k].body; 
+    /****************** Generation of data ******************/
+    /* Extract the correct element containing the subtype & the other body */
+    var filetype;
+    var filecontent;
+    var http_headers;
+    for (var k in msg.body) {
+      if (msg.body[k].header('HTTP-part') == 'Content') {
+        filetype = msg.body[k].contentType()['subtype'];
+        filecontent = msg.body[k].body;
+      } else if (msg.body[k].header('HTTP-part') == 'Header') {
+        http_headers = msg.body[k].body;
+      }
     }
-  }
-  
-  /* Converting the epoch time into dates */
-  var utcSeconds = msg.header('HTTP-Archive-Time');
-  var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
-  d.setUTCSeconds(utcSeconds);
 
-  //Standard headers
-  var myobj = {
-    //First Header  
-    MIME_Version: msg.header('MIME_Version'), 
-    Type: msg.contentType()['type'], 
-    Subtype: msg.contentType()['subtype'],
-    Params: msg.contentType()['params'],
-    HTTP_Part: msg.header('HTTP-part'),
-    HTTP_Collection: msg.header('HTTP-Collection'),
-    HTTP_Harvester: msg.header('HTTP-Harvester'),
-    HTTP_Header_Length: msg.header('HTTP-Header-Length'),
-    HTTP_Header_Md5: msg.header('HTTP-Header-MD5'),
-    HTTP_Content_Length: msg.header('HTTP-Content-Length'),
-    HTTP_Content_Md5: msg.header('HTTP-Content-MD5'),
-    HTTP_Url: msg.header('HTTP-URL'),
-    HTTP_Archive_Time: d,
+    /* Converting the epoch time into dates */
+    var utcSeconds = msg.header('HTTP-Archive-Time');
+    var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
+    d.setUTCSeconds(utcSeconds);
 
-    HTTP_Headers: http_headers,
+    //Standard headers
+    var myobj = {
+      //First Header  
+      MIME_Version: msg.header('MIME_Version'),
+      Type: msg.contentType()['type'],
+      Subtype: msg.contentType()['subtype'],
+      Params: msg.contentType()['params'],
+      HTTP_Part: msg.header('HTTP-part'),
+      HTTP_Collection: msg.header('HTTP-Collection'),
+      HTTP_Harvester: msg.header('HTTP-Harvester'),
+      HTTP_Header_Length: msg.header('HTTP-Header-Length'),
+      HTTP_Header_Md5: msg.header('HTTP-Header-MD5'),
+      HTTP_Content_Length: msg.header('HTTP-Content-Length'),
+      HTTP_Content_Md5: msg.header('HTTP-Content-MD5'),
+      HTTP_Url: msg.header('HTTP-URL'),
+      HTTP_Archive_Time: d,
 
-    //Second section: file
-    Filetype: filetype,
-    Filecontent: filecontent,
-  };
+      HTTP_Headers: http_headers,
 
-  /****************** MongoDB data insertion ******************/
-  MongoClient.connect(Mongo_url, function(err, db) {
-    if (err){ 
-      throw err;
+      //Second section: file
+      Filetype: filetype,
+      Filecontent: filecontent,
     };
 
-    var dbo = db.db("mongomydb");
+    // 
+    if (parseInt(msg.header('HTTP-Content-Length')) < 9000000) {
 
-    dbo.collection("mongoarticles").insertOne(myobj, function(err, res) {
-      if (err) throw err;
-      console.log(msg.header('Http-Url') +  " inserted succesfully with MongoDB");
-      db.close();
-    });
-  });
+      /****************** MongoDB data insertion ******************/
+      var Mongo_client = await MongoClient.connect(Mongo_url);
+      var dbmongo = Mongo_client.db("mongomydb");
+      try {
+        await dbmongo.collection("mongoarticles").insertOne(myobj);
+        console.log(msg.header('Http-Url') + " inserted succesfully with MongoDB");
+      } finally {
+        await Mongo_client.close(true);
+      }
 
-  /****************** CouchDB data insertion ******************/
-  dbo.insert(myobj, function (err, body) {
-    if (!err) {
+      /****************** CouchDB data insertion ******************/
+      await dbcouch.insert(myobj);
       console.log(msg.header('Http-Url') + " inserted succesfully with CouchDB");
-    } else {
-      console.log(err);
-    }
-  });
 
-  nrFile++;
-})
-console.log("Document insertion process completed! " + nrFile + " of files scanned in total!");
+      nrFile++;
+    }
+  }
+  console.log("Document insertion process completed! " + nrFile + " of files scanned in total!");
+}
+
+insertFiles(files);
 
 /****************** CassandraDB ******************/
 /*
