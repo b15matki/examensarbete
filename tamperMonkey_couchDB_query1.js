@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      0.1
 // @description  Generation of statistical data for CouchDB's query 2
-// @include      http://localhost:5984/dbo/_design/testqueries/_view/query2*
+// @include      http://localhost:5984/dbo/_design/testqueries/_view/query1*
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
 // @author       Mathias Kinnander
 // @match        https://chrome.google.com/webstore/category/extensions
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 console.log("Start");
-var localURL='http://wwwlab.iit.his.se/b15matki/query_results/couchDB_query2.php';
+var localURL='http://wwwlab.iit.his.se/b15matki/query_results/couchDB_query1.php';
 var scrapedData=[];
 var responseTotalTime = "";
 var startYear = 1997;
@@ -26,9 +26,9 @@ $(document).ready(function(){
 
 // Saving response times
 function collectResponseTime(){
-  var requestStartTime = window.performance.timing.requestStart;
-  var responseEndTime = window.performance.timing.responseEnd;
-  responseTotalTime = responseEndTime - requestStartTime;
+    var requestStartTime = window.performance.timing.requestStart;
+    var responseEndTime = window.performance.timing.responseEnd;
+    responseTotalTime = responseEndTime - requestStartTime;
 }
 
 function nextQuery(){
@@ -38,7 +38,7 @@ function nextQuery(){
     toTextFile();
     currentYear++;
     localStorage.setItem("LScurrentYear", currentYear);
-    window.location.replace("http://localhost:5984/dbo/_design/testqueries/_view/query2?startkey=%221998-01-01T00:00:00Z%22&endkey=%221998-12-31T00:00:00Z%22");
+    window.location.replace("http://localhost:5984/dbo/_design/testqueries/_view/query1?startkey=%221998-01-01T00:00:00Z%22&endkey=%221998-12-31T00:00:00Z%22");
     console.log("if currentyear == NULL");
   }
   //If the current date is in between the start year and the end year modify the URL
@@ -46,7 +46,7 @@ function nextQuery(){
     toTextFile();
     currentYear++;
     localStorage.setItem("LScurrentYear", currentYear);
-    window.location.replace("http://localhost:5984/dbo/_design/testqueries/_view/query2?startkey=%22"+ currentYear + "-01-01T00:00:00Z%22&endkey=%22" + currentYear + "-12-31T00:00:00Z%22");
+    window.location.replace("http://localhost:5984/dbo/_design/testqueries/_view/query1?startkey=%22"+ currentYear + "-01-01T00:00:00Z%22&endkey=%22" + currentYear + "-12-31T00:00:00Z%22");
     console.log("if currentyear != NULL");
   }
 }
