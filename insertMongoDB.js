@@ -5,6 +5,7 @@ const targetFolder = '/home/mathias/Documents/kungliga-biblioteket/uncompressed/
 console.log("Document insertion initiated!");
 
 var nrFile = 0;
+numberOfRejectedFiles = 0;
 
 /****************** MongoDB initialization ******************/
 var MongoClient = require('mongodb').MongoClient;
@@ -33,7 +34,7 @@ async function insertFiles(files) {
     for (var k in msg.body) {
       if (msg.body[k].header('HTTP-part') == 'Content') {
         filetype = msg.body[k].contentType()['subtype'];
-        filecontent = msg.body[k].body;
+        //filecontent = msg.body[k].body;
       } else if (msg.body[k].header('HTTP-part') == 'Header') {
         http_headers = msg.body[k].body;
       }
@@ -68,7 +69,6 @@ async function insertFiles(files) {
       Filecontent: filecontent,
     };
 
-    // 
     if (parseInt(msg.header('HTTP-Content-Length')) < 9000000) {
 
       /****************** MongoDB data insertion ******************/
@@ -84,14 +84,15 @@ async function insertFiles(files) {
       /****************** CouchDB data insertion ******************/
       await dbcouch.insert(myobj);
       console.log(msg.header('Http-Url') + " inserted succesfully with CouchDB");
-
       nrFile++;
+    } else {
+      numberOfRejectedFiles++;
     }
   }
   console.log("Document insertion process completed! " + nrFile + " of files scanned in total!");
 }
-
 insertFiles(files);
+console.log("Number of rejected files: " + numberOfRejectedFiles);
 
 /****************** CassandraDB ******************/
 /*
