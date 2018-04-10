@@ -28,10 +28,10 @@ $(document).ready(function () {
 // Saving response times
 function collectResponseTime() {
     var requestStartTime = window.performance.timing.requestStart;
-    var responseEndTime = window.performance.timing.responseEnd;
+    var responseStartTime = window.performance.timing.responseStart;
     responseTotalTime = responseEndTime - requestStartTime;
     console.log("Response time collected: " + responseTotalTime);
-} 
+}
 
 //TODO Run 10 times for each query, save to file if time i
 function nextQuery() {
