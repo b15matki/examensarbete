@@ -4,8 +4,8 @@ var request = require('request');
 var query = "";
 
 // Time variables
-var currentYear = 1997; //1997
-var endYear = 2017; //2017
+var currentYear = 1997;
+var endYear = 2017;
 
 // Connection URL
 const url = 'mongodb://localhost:27017';
@@ -18,13 +18,12 @@ async function searchMongoDB() {
 
         var samples = [];
         console.log("Querying: " + currentYear);
-        for (var queryNr = 0; queryNr < 10; queryNr++) {
+        for (var queryNr = 0; queryNr < 100; queryNr++) {
 
             // Use connect method to connect to the server
             var client = await MongoClient.connect(url);
 
-            // REMOVE WHEN DONE
-            console.log("Connected, executing " + queryNr + "/" + 10);
+            console.log("Connected, executing " + queryNr + "/" + 100);
 
             const db = client.db(dbName);
             var articles = db.collection("mongoarticles");
@@ -50,7 +49,7 @@ async function searchMongoDB() {
             await request.post({
                 headers: { 'content-type': 'application/x-www-form-urlencoded' },
                 url: 'http://wwwlab.iit.his.se/b15matki/query_results/mongoDB_query2.php',
-                body: "str=Query nr: " + queryNr+1 + ". Elapsed time = " + explain.executionStats.executionTimeMillis + "\r\n"
+                body: "str=Query nr: " + queryNr + ". Elapsed time = " + explain.executionStats.executionTimeMillis + "\r\n"
             });
         }
 

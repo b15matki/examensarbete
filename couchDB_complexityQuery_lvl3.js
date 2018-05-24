@@ -2,8 +2,8 @@
 // @name         New Userscript
 // @namespace    http://tampermonkey.net/
 // @version      0.1
-// @description  Generation of statistical data for CouchDB's query 2
-// @include      http://localhost:5984/dbo/_design/testqueries/_view/query2*
+// @description  Generation of statistical data for CouchDB's complexity query level 3 
+// @include      http://localhost:5984/dbo/_design/testqueries/_view/complexityQuery_lvl3*
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
 // @author       Mathias Kinnander
 // @match        https://chrome.google.com/webstore/category/extensions
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 console.log("Start");
-var localURL = 'http://wwwlab.iit.his.se/b15matki/query_results/couchDB_query2.php';
+var localURL = 'http://wwwlab.iit.his.se/b15matki/query_results/couchDB_complexityQuery_lvl3.php';
 var scrapedData = [];
 var responseTotalTime = "";
 var queryNr = localStorage.getItem("LSqueryNr");
@@ -20,9 +20,8 @@ var avgResponseTime = 0;
 var LSallResponseTimes = JSON.parse(localStorage.getItem("LSallResponseTimes"));
 
 //Query specification
-var startYear = 1997;
-var currentYear = localStorage.getItem("LScurrentYear");
-var endYear = 2017;
+var startYear = 2000;
+var endYear = 2005;
 
 // Main function that calls the other functions
 $(document).ready(function () {
@@ -40,16 +39,6 @@ function collectResponseTime() {
 
 //TODO Run 10 times for each query, save to file if time i
 function nextQuery() {
-    if (currentYear === null || currentYear == "undefined" || currentYear == "NaN" || currentYear == "") {
-        currentYear = startYear;
-        localStorage.setItem("LScurrentYear", currentYear);
-        console.log("currentYear initialized");
-    }
-
-    console.log("Current Year: " + currentYear);
-    console.log("End Year: " + endYear);
-    if (currentYear < endYear) {
-        console.log("startYear < currentYear");
         if (queryNr === null || queryNr == "undefined" || queryNr == "NaN" || queryNr == "") {
             //Increase the query number
             queryNr = 1;
@@ -60,9 +49,9 @@ function nextQuery() {
             console.log("queryNr === null || queryNr == undefined || queryNr == NaN || queryNr == ");
             
             responseTime();
-            window.location.replace("http://localhost:5984/dbo/_design/testqueries/_view/query2?startkey=%22" + currentYear + "-01-01T00:00:00Z%22&endkey=%22" + currentYear + "-12-31T00:00:00Z%22");
+            window.location.replace("http://localhost:5984/dbo/_design/testqueries/_view/complexityQuery_lvl3?startkey=%222000-01-01T00:00:00Z%22&endkey=%222005-12-31T00:00:00Z%22");
         }
-        else if (queryNr < 10) {
+        else if (queryNr < 100) {
             //If the current date is equal to the mimimum start year proceed as usual
             LSallResponseTimes.push(responseTotalTime);
             localStorage.setItem("LSallResponseTimes", JSON.stringify(LSallResponseTimes));
@@ -74,9 +63,9 @@ function nextQuery() {
             responseTime();
 
             //Replacing the current window
-            window.location.replace("http://localhost:5984/dbo/_design/testqueries/_view/query2?startkey=%22" + currentYear + "-01-01T00:00:00Z%22&endkey=%22" + currentYear + "-12-31T00:00:00Z%22");
+            window.location.replace("http://localhost:5984/dbo/_design/testqueries/_view/complexityQuery_lvl3?startkey=%222000-01-01T00:00:00Z%22&endkey=%222005-12-31T00:00:00Z%22");
             console.log("else current is not equal to NULL");
-        } else if(queryNr == 10) {
+        } else if(queryNr == 100) {
 
             //Summarize average times and
             var responseTimeSum = 0;
@@ -92,19 +81,14 @@ function nextQuery() {
             localStorage.setItem("LSqueryNr", queryNr);
 
             //Incrementing the year variable
-            currentYear++;
-            localStorage.setItem("LScurrentYear", currentYear);
 
             //Replacing the current window to the new query
-            window.location.replace("http://localhost:5984/dbo/_design/testqueries/_view/query2?startkey=%22" + currentYear + "-01-01T00:00:00Z%22&endkey=%22" + currentYear + "-12-31T00:00:00Z%22");
-            console.log("queryNR == 10");
+            console.log("queryNR == 100");
         }
-    }
 }
 
 //Store which year is being queried
 function startOfQuery() {
-    console.log("Querying: " + currentYear);
     function ajaxCall(data) {
         try {
             GM_xmlhttpRequest({
@@ -119,7 +103,7 @@ function startOfQuery() {
             console.log(ex1);
         }
     }
-    scrapedData.push("Querying: " + currentYear);
+    scrapedData.push("Querying years 2000 - 2005 ");
     ajaxCall(scrapedData);
 }
 

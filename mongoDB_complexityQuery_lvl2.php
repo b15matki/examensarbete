@@ -1,5 +1,5 @@
 <?php
-    $fp=fopen("couchDB_query1.txt","a");
+    $fp=fopen("mongoDB_complexityQuery_lvl2.txt","a");
     fputs ($fp, $_POST['str']);
     fclose ($fp);	
 ?>
